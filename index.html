@@ -306,19 +306,8 @@ input{min-height:52px}
 </section>
 
 <script>
-/*
-==========================================================
-CONFIGURAÇÃO DO WEBHOOK
-==========================================================
-IMPORTANTE:
-Para testes, você pode colocar o webhook aqui.
-Para um site público, NÃO é seguro expor o webhook no HTML.
-O ideal é usar um backend/serverless como intermediário.
-
-Exemplo:
+/* Webhook do Discord configurado */
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1531379548820603053/mbJKWw2gwYT-oChHI3dAg_ZmXFjI-l508CqYCDkhlVFL8zk1qNW7A_D-hO0mqG5HSwjJ";
-*/
-const DISCORD_WEBHOOK_URL = "";
 
 /* Navegação simples entre páginas */
 function goToPage(number){
@@ -416,51 +405,46 @@ function collectRecords(respondentName){
   };
 }
 
-/* Envia o registro para o Discord em partes */
+/* Envia o registro para o Discord em partes formatadas corretamente */
 async function sendToDiscord(records){
   if(!DISCORD_WEBHOOK_URL){
     return true;
   }
 
-  const header=
-    "🩸 **NOVO REGISTRO — BANQUET MACABRO**\\n"+
-    "**Quem respondeu:** "+records.respondent+"\\n"+
-    "**Data:** "+new Date().toLocaleString("pt-BR")+"\\n\\n";
+  const dateFormatted = new Date(records.createdAt).toLocaleString("pt-BR");
+  const header = `🩸 **NOVO REGISTRO — BANQUET MACABRO**\n**Quem respondeu:** ${records.respondent}\n**Data:** ${dateFormatted}\n\n`;
 
-  const chunks=[];
-  let current=header;
+  const chunks = [];
+  let current = header;
 
-  records.answers.forEach(function(item,index){
-    const text=
-      "**"+(index+1)+". "+item.question+"**\\n"+
-      (item.answer || "(sem resposta)")+
-      "\\n\\n";
+  records.answers.forEach(function(item, index){
+    const text = `**${index + 1}. [${item.section}] ${item.question}**\n${item.answer || "(sem resposta)"}\n\n`;
 
     /* Discord limita mensagens a 2000 caracteres */
-    if((current+text).length>1900){
+    if((current + text).length > 1900){
       chunks.push(current);
-      current="";
+      current = "";
     }
 
-    current+=text;
+    current += text;
   });
 
   if(current) chunks.push(current);
 
   for(const chunk of chunks){
-    const response=await fetch(DISCORD_WEBHOOK_URL,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
+    const response = await fetch(DISCORD_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
       },
-      body:JSON.stringify({
-        username:"Banquet Macabro — Registros",
-        content:chunk
+      body: JSON.stringify({
+        username: "Banquet Macabro — Registros",
+        content: chunk
       })
     });
 
     if(!response.ok){
-      throw new Error("Discord retornou erro "+response.status);
+      throw new Error("Discord retornou erro " + response.status);
     }
   }
 
@@ -482,7 +466,7 @@ async function finalizeForm(){
 
   const records=collectRecords(name);
 
-  /* Salva uma cópia local */
+  /* Salva uma cópia local por segurança */
   localStorage.setItem(
     "banquetMacabroRecords",
     JSON.stringify(records)
@@ -521,4 +505,4 @@ document.getElementById("nameModal").addEventListener("click",function(event){
 });
 </script>
 </body>
-                                 </html>
+</html>
